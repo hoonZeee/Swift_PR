@@ -1,5 +1,9 @@
 # Swift_PR
 
+## 야무진 사이트
+1. 아이콘
+- https://www.flaticon.com/
+
 ### 5/8 
 - swift 기초문법숙지 (react랑 구성이 비슷해보이네 다 component 지향 설계를 하면 될듯
 - xcode 둘러보기
