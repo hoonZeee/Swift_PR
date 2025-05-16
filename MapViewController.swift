@@ -13,24 +13,11 @@ class MapViewController: UIViewController, CLLocationManagerDelegate, XMLParserD
     
     
     @IBOutlet weak var mapView: KMViewContainer!
-    
-    
     @IBOutlet weak var busInfoView: UIView!
-    
-    
     @IBOutlet weak var busInfoViewBottomConstraint: NSLayoutConstraint!
-    
     @IBOutlet weak var dragHandView: UIView!
-    
-    
-    
     @IBOutlet weak var busStopName: UILabel!
-    
-    
-    
     @IBOutlet weak var arrivalInfoTable: UITableView!
-    
-    
     
     
     
@@ -41,24 +28,27 @@ class MapViewController: UIViewController, CLLocationManagerDelegate, XMLParserD
     
     // XML 파싱 관련 변수
     var currentElement = ""
+    var currentStopID = ""
     var currentStopName = ""
     var currentGpsX = ""
     var currentGpsY = ""
     
     
     var didAddStyle = false
-    
     var addedMarkerKeys = Set<String>()
+    var busStopDict = [String: BusStop]()
     
-    
+    struct BusStop {
+            let id: String
+            let name: String
+            let x: Double
+            let y: Double
+    }
     
     
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        
-        
         // 지도 연결
         mapController = KMController(viewContainer: mapView)
         mapController?.prepareEngine()
@@ -80,16 +70,14 @@ class MapViewController: UIViewController, CLLocationManagerDelegate, XMLParserD
         locationManager.requestWhenInUseAuthorization()                     //앱이 사용중일때만 위치 기반을 사용하도록
         locationManager.startUpdatingLocation()                             //실제 위치정보 추적
         
-        
-        
         fetchBusStops()
         
         let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
         dragHandView.addGestureRecognizer(panGesture)
-        
-        
-        
+
     }
+    
+    
     
     func showBusInfoView() {
         busInfoViewBottomConstraint.constant = 0
@@ -97,6 +85,9 @@ class MapViewController: UIViewController, CLLocationManagerDelegate, XMLParserD
             self.view.layoutIfNeeded()
         }
     }
+    
+    
+    
     
     @objc func handlePanGesture(_ gesture: UIPanGestureRecognizer) {
         let translation = gesture.translation(in: self.view)
@@ -133,7 +124,6 @@ class MapViewController: UIViewController, CLLocationManagerDelegate, XMLParserD
     
     
     // 버튼 액션 - 저장된 위치로 이동
-
     @IBAction func moveToMyLocation(_ sender: Any) {
         guard let location = lastKnownLocation else {
             print("❗ 아직 위치를 받아오지 못했어요")
@@ -141,6 +131,9 @@ class MapViewController: UIViewController, CLLocationManagerDelegate, XMLParserD
         }
         moveCamera(to: location)
     }
+    
+    
+    
     
     // 공통 카메라 이동 함수
     func moveCamera(to location: CLLocation) {
@@ -163,140 +156,106 @@ class MapViewController: UIViewController, CLLocationManagerDelegate, XMLParserD
         }
     }
     
-    // 정류장 API 호출 함수
     func fetchBusStops() {
-        let serviceKey = "TF7Mku%2BuSzYBCUtjel7ketfVE8uKj1gnPjH0fxQG1amxTSmZHTaIWBCr5qqOYQ7%2Fy5CHFp%2FvmmmeW2ITP53yHw%3D%3D"
-
-        for page in 1...9 {
-            let urlStr = "https://apis.data.go.kr/6260000/BusanBIMS/busStopList?serviceKey=\(serviceKey)&numOfRows=1000&pageNo=\(page)"
-            guard let url = URL(string: urlStr) else { continue }
-
-            let task = URLSession.shared.dataTask(with: url) { data, response, error in
-                guard let data = data else {
-                    print("❌ 데이터 없음 (page \(page))")
-                    return
-                }
-                let parser = XMLParser(data: data)
-                parser.delegate = self
-                parser.parse()
-            }
-            task.resume()
-        }
-    }
-    
-    
-    
-    func parser(_ parser: XMLParser, didStartElement elementName: String,
-                namespaceURI: String?, qualifiedName qName: String?,
-                attributes attributeDict: [String : String] = [:]) {
-        currentElement = elementName
-        
-        if elementName == "item" {
-                // 여기서 초기화해야 새로운 item 시작할 때 값이 깨끗해짐!
-                currentStopName = ""
-                currentGpsX = ""
-                currentGpsY = ""
-            }
-    }
-    
-    func parser(_ parser: XMLParser, foundCharacters string: String) {
-        let trimmed = string.trimmingCharacters(in: .whitespacesAndNewlines)
-        if !trimmed.isEmpty {
-            print("📦 Element: \(currentElement), Value: \(trimmed)")
-            switch currentElement {
-            case "bstopnm": currentStopName = trimmed
-            case "gpsx": currentGpsX = trimmed
-            case "gpsy": currentGpsY = trimmed
-            default: break
-            }
-        }
-    }
-    
-    func parser(_ parser: XMLParser, didEndElement elementName: String,
-                    namespaceURI: String?, qualifiedName qName: String?) {
-            if elementName == "item",
-               let x = Double(currentGpsX),
-               let y = Double(currentGpsY) {
-                
-                let isValidCoord = (-90.0...90.0).contains(y) && (-180.0...180.0).contains(x)
-                   guard isValidCoord else {
-                       print("🚫 잘못된 좌표: \(x), \(y)")
+           let serviceKey = "TF7Mku%2BuSzYBCUtjel7ketfVE8uKj1gnPjH0fxQG1amxTSmZHTaIWBCr5qqOYQ7%2Fy5CHFp%2FvmmmeW2ITP53yHw%3D%3D"
+           for page in 1...9 {
+               let urlStr = "https://apis.data.go.kr/6260000/BusanBIMS/busStopList?serviceKey=\(serviceKey)&numOfRows=1000&pageNo=\(page)"
+               guard let url = URL(string: urlStr) else { continue }
+               let task = URLSession.shared.dataTask(with: url) { data, response, error in
+                   guard let data = data else {
+                       print("❌ 데이터 없음 (page \(page))")
                        return
                    }
-                
-                let point = MapPoint(longitude: x, latitude: y)
-                
-                DispatchQueue.main.async {
-                    if let mapView = self.mapController?.getView("mapview") as? KakaoMap {
-                        let manager = mapView.getLabelManager()
-                        
-                        
-                        // 레이어 추가 (1회만)
-                        if manager.getLabelLayer(layerID: "BusStopLayer") == nil {
-                            let layerOption = LabelLayerOptions(layerID: "BusStopLayer", competitionType: .none, competitionUnit: .poi, orderType: .rank, zOrder: 10001)
-                            _ = manager.addLabelLayer(option: layerOption)
-                        }
-                        
-                        // 스타일 추가 (1회만)
-                        if !self.didAddStyle {
-                            if let icon = UIImage(named: "pin_red") {
-                                let iconStyle = PoiIconStyle(symbol: icon, anchorPoint: CGPoint(x: 0.5, y: 1.0))
-                                let levelStyle = [
-                                    PerLevelPoiStyle(iconStyle: iconStyle, level: 16) // 16 이상에서만 보여짐
-                                ]
+                   let parser = XMLParser(data: data)
+                   parser.delegate = self
+                   parser.parse()
+               }
+               task.resume()
+           }
+       }
 
-                                let poiStyle = PoiStyle(styleID: "busStopStyle", styles: levelStyle)
-                                manager.addPoiStyle(poiStyle)
-                                self.didAddStyle = true
-                            }
-                        }
-                        
-                        // POI 생성
-                        
-                        let markerTitle = self.currentStopName.isEmpty ? "(이름 없음)" : self.currentStopName
-                        let roundedX = Double(String(format: "%.5f", x))!
-                        let roundedY = Double(String(format: "%.5f", y))!
-                        let markerKey = "\(markerTitle)_\(roundedX)_\(roundedY)"
-                        
-                        let poiOption = PoiOptions(styleID: "busStopStyle", poiID: markerKey)
-                        poiOption.clickable = true
-                        poiOption.rank = 0
-                        poiOption.addText(PoiText(text: self.currentStopName, styleIndex: 0))
-                        
-                        if let layer = manager.getLabelLayer(layerID: "BusStopLayer") {
-                            
-                            
-                            // ✅ 중복 마커 방지
-                            if self.addedMarkerKeys.contains(markerKey) {
-                                print("⚠️ 이미 추가된 정류장: \(markerKey)")
-                                return
-                            }
-                            self.addedMarkerKeys.insert(markerKey)
-                            
-                        
-                            
-                            if let poi = layer.addPoi(option: poiOption, at: point) {
-                                // 마커 탭 이벤트 등록
-                                _ = poi.addPoiTappedEventHandler(target: self, handler: { [weak self] (target: MapViewController) -> (PoiInteractionEventParam) -> Void in
-                                    return { param in
-                                        guard let self = self else { return }
-                                        print("🖱 마커 클릭됨: \(param.poiItem.itemID)")
-                                        self.selectedStopName = param.poiItem.itemID
-                                        self.showBusInfoView()
-                                    }
-                                })
+       func parser(_ parser: XMLParser, didStartElement elementName: String,
+                   namespaceURI: String?, qualifiedName qName: String?,
+                   attributes attributeDict: [String : String] = [:]) {
+           currentElement = elementName
+           if elementName == "item" {
+               currentStopID = ""
+               currentStopName = ""
+               currentGpsX = ""
+               currentGpsY = ""
+           }
+       }
 
-                                poi.show()
-                                print("🚌 마커 추가됨: \(markerTitle)")
-                            }
-                            layer.showAllPois()
-                        }
-                        
-                    }
-                }
-                
+       func parser(_ parser: XMLParser, foundCharacters string: String) {
+           let trimmed = string.trimmingCharacters(in: .whitespacesAndNewlines)
+           if !trimmed.isEmpty {
+               switch currentElement {
+               case "bstopid": currentStopID = trimmed
+               case "bstopnm": currentStopName = trimmed
+               case "gpsx": currentGpsX = trimmed
+               case "gpsy": currentGpsY = trimmed
+               default: break
+               }
+           }
+       }
 
-            }
-        }
-    }
-
+       func parser(_ parser: XMLParser, didEndElement elementName: String,
+                   namespaceURI: String?, qualifiedName qName: String?) {
+           if elementName == "item",
+              let x = Double(currentGpsX),
+              let y = Double(currentGpsY) {
+               let isValidCoord = (-90.0...90.0).contains(y) && (-180.0...180.0).contains(x)
+               guard isValidCoord else {
+                   print("🚫 잘못된 좌표: \(x), \(y)")
+                   return
+               }
+               let busStop = BusStop(id: currentStopID, name: currentStopName, x: x, y: y)
+               let point = MapPoint(longitude: x, latitude: y)
+               DispatchQueue.main.async {
+                   if let mapView = self.mapController?.getView("mapview") as? KakaoMap {
+                       let manager = mapView.getLabelManager()
+                       if manager.getLabelLayer(layerID: "BusStopLayer") == nil {
+                           let layerOption = LabelLayerOptions(layerID: "BusStopLayer", competitionType: .none, competitionUnit: .poi, orderType: .rank, zOrder: 10001)
+                           _ = manager.addLabelLayer(option: layerOption)
+                       }
+                       if !self.didAddStyle {
+                           if let icon = UIImage(named: "pin_red") {
+                               let iconStyle = PoiIconStyle(symbol: icon, anchorPoint: CGPoint(x: 0.5, y: 1.0))
+                               let levelStyle = [PerLevelPoiStyle(iconStyle: iconStyle, level: 16)]
+                               let poiStyle = PoiStyle(styleID: "busStopStyle", styles: levelStyle)
+                               manager.addPoiStyle(poiStyle)
+                               self.didAddStyle = true
+                           }
+                       }
+                       let markerKey = "\(busStop.id)"
+                       self.busStopDict[markerKey] = busStop
+                       if self.addedMarkerKeys.contains(markerKey) {
+                           return
+                       }
+                       self.addedMarkerKeys.insert(markerKey)
+                       let poiOption = PoiOptions(styleID: "busStopStyle", poiID: markerKey)
+                       poiOption.clickable = true
+                       poiOption.rank = 0
+                       poiOption.addText(PoiText(text: busStop.name, styleIndex: 0))
+                       if let layer = manager.getLabelLayer(layerID: "BusStopLayer"),
+                          let poi = layer.addPoi(option: poiOption, at: point) {
+                           _ = poi.addPoiTappedEventHandler(target: self, handler: { [weak self] (target: MapViewController) -> (PoiInteractionEventParam) -> Void in
+                               return { param in
+                                   guard let self = self else { return }
+                                   let poiID = param.poiItem.itemID  // 👉 클릭된 마커의 ID 가져옴
+                                   if let busStop = self.busStopDict[poiID] {
+                                       self.selectedStopName = busStop.name
+                                       self.busStopName.text = busStop.name
+                                       self.showBusInfoView()
+                                   } else {
+                                       print("🚫 해당 ID로 BusStop 찾을 수 없음: \(poiID)")
+                                   }
+                               }
+                           })
+                           poi.show()
+                       }
+                   }
+               }
+           }
+       }
+   }
