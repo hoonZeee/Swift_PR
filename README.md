@@ -265,3 +265,15 @@ watch OS 남은거
 
 ### 5/29
 - 앱심사대기 진행중
+
+
+### 5/30
+- 심사 리젝
+사유 : Guideline 5.1.1 - Legal - Privacy - Data Collection and Storage
+Issue Description
+The app requires users to register or log in to access features that are not account based.
+Specifically, the app requires users to register before accessing the app. Apps may not require users to enter personal information to function, except when directly relevant to the core functionality of the app or required by law.
+
+- 앱에서 로그인, 회원가입을 하지 않으면 기능을 이용하지못한다는 이유로 리젝..
+- 아니 회원정보를 필수로 하는 앱인데 하.. 새벽부터 루트화면에 프리뷰 기능을 추가했다..
+- 이러다 내가 생각못한 다양한 사유도 나올것 같은데 흑흑
