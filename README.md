@@ -291,3 +291,5 @@ Specifically, the app requires users to register before accessing the app. Apps 
 - 애플워치 로그인안되있을때 친절하게 메세지
 - 여러 정류장을 등록하는 사용자 고려?
 - 공공데이터 트래픽 확장
+- 서버 연결끊겼을때 로그아웃 후 다시 로그인 요청 메세지로 변경하기
+- 지도에서 내위치도 표현하기
