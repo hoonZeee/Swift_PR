@@ -293,3 +293,11 @@ Specifically, the app requires users to register before accessing the app. Apps 
 - 공공데이터 트래픽 확장
 - 서버 연결끊겼을때 로그아웃 후 다시 로그인 요청 메세지로 변경하기
 - 지도에서 내위치도 표현하기
+
+
+
+### 6/5
+- kakaoMap constraint .. + my location marker > google Maps + swiftUI
+- 버스 도착 알고리즘 변경 ? > 1분 땡기기?
+- 지역확장성
+- watchOS UI개선
