@@ -294,7 +294,12 @@ Specifically, the app requires users to register before accessing the app. Apps 
 - 서버 연결끊겼을때 로그아웃 후 다시 로그인 요청 메세지로 변경하기
 - 지도에서 내위치도 표현하기
 
-
+### 6/11
+- 앱 다음 업데이트 진행 계획
+  + watch OS 버전 낮추기, IOS도 낮춰도될듯
+  + 갱신 알고리즘 개선 > 1분정도 앞당기자 (아님 45초 )
+  + 서울 확장. < 이건 장기로 좀 보자
+  + 6/25 공모전 마감 기간 준수
 
 ### 6/5
 - kakaoMap constraint .. + my location marker > google Maps + swiftUI
