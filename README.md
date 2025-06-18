@@ -308,3 +308,6 @@ Specifically, the app requires users to register before accessing the app. Apps 
   + 갱신 알고리즘 개선 > 1분정도 앞당기자 (아님 45초 )
   + 서울 확장. < 이건 장기로 좀 보자
   + 6/25 공모전 마감 기간 준수
+
+### 6/18
+- 부산 공공데이터 창업 경진대회 출전
